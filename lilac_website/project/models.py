@@ -26,6 +26,9 @@ class ProjectPage(models.Model):
         format='JPEG',
         options={'quality': 100},
     )
+    # 是否在项目页可见, 因为首页可能有一些紫丁香相关的介绍, 因此需要一些非项目的文章
+    # 该字段用于确保非项目的文章在项目页不被显示
+    is_project = models.BooleanField('是否在项目页可见', default=True)
     # 文章标题
     title = models.CharField(max_length=100)
     # 摘要, 不超过500字
