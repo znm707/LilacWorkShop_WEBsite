@@ -1,3 +1,6 @@
+# coding: utf-8
+
+from django.views import View
 from django.shortcuts import render, HttpResponse
 # 认证组件
 from django.contrib.auth import authenticate, login, logout
@@ -50,8 +53,33 @@ def user_logout(request):
 
 
 # 用户注册
-def user_register(request):
-    if request.method == 'POST':
+class UserRegisterView(View):
+    '''
+        用户注册时调用的类视图
+    '''
+    def get(self, request):
+        '''
+            返回注册页面
+            Args:
+                request: 系统请求类, 包含用户必要的信息
+
+            Returns:
+                render: 返回渲染的注册页面
+        '''
+        user_register_form = UserRegisterForm()
+        profile_register_form = ProfileRegisterForm()
+        context = {'form': user_register_form, 'profile_form': profile_register_form}
+        return render(request, 'user/register.html', context)
+
+    def post(self, request):
+        '''
+            处理用户注册表单
+            Args:
+                request: 系统请求类, 包含用户必要的信息
+
+            Returns:
+                render: 注册结果, TODO 如果注册成功, 自动登录, 并自动跳转到某一页面
+        '''
         user_register_form = UserRegisterForm(data=request.POST)
         profile_register_form = ProfileRegisterForm(data=request.POST)
         if user_register_form.is_valid() and profile_register_form.is_valid():
@@ -69,14 +97,3 @@ def user_register(request):
             # 保存好数据后立即登录并返回博客列表页面
             login(request, new_user)
             return HttpResponse("TODO: 注册成功")
-        else:
-            print("error")
-            print(user_register_form.errors)
-            return HttpResponse(user_register_form.errors)
-    elif request.method == 'GET':
-        user_register_form = UserRegisterForm()
-        profile_register_form = ProfileRegisterForm()
-        context = {'form': user_register_form, 'profile_form': profile_register_form}
-        return render(request, 'user/register.html', context)
-    else:
-        return HttpResponse("请使用GET或POST请求数据")

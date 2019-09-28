@@ -65,3 +65,23 @@ class Profile(models.Model):
     avatar = models.ImageField(upload_to='avatar/%Y%m%d/', blank=True)
     # 个人介绍, 使用富文本编辑器
     body = RichTextField()
+
+    class Meta:
+        '''
+        该类用于存储模型的别名等项目
+        '''
+        verbose_name = '用户详情'
+        verbose_name_plural = '用户详情'
+
+    def __str__(self):
+        """
+        返回模型的所属用户的用户名， 用于优化在admin页面的显示
+
+        Args:
+            None
+
+        Returns:
+            str: 返回模型的所属用户的用户名
+
+        """
+        return self.user.username

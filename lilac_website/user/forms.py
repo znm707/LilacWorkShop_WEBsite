@@ -28,9 +28,16 @@ class UserRegisterForm(forms.ModelForm):
         model = User
         fields = ('username', 'first_name', 'last_name')
 
-    # 对两次输入的密码是否一致进行检查
     def clean_password2(self):
-        print('in clean_password2')
+        '''
+            对两次输入的密码是否一致进行检查
+
+            Args:
+                None
+
+            Returns:
+                None
+        '''
         data = self.cleaned_data
         if data.get('password') == data.get('password2'):
             return data.get('password')
@@ -40,16 +47,18 @@ class UserRegisterForm(forms.ModelForm):
     def clean_email(self):
         '''
             对输入的email进行检查是否为可注册邮箱
+            Args:
+                None
+
+            Returns:
+                None
         '''
-        print('in clean_email')
         data = self.cleaned_data
         user_email = data.get('email')
         user_email_domin = user_email[(user_email.find('@')+1):]  # 取出用户邮箱域名
-        print(user_email_domin)
         schools = School.objects.all()
         for school in schools:
             if user_email_domin in school.school_emails:
-                print('mail check OK')
                 return data.get('email')
         raise forms.ValidationError("该邮箱暂不支持")
 
