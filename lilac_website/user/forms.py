@@ -2,7 +2,7 @@
 
 from django import forms
 from django.contrib.auth.models import User
-from .models import School
+from .models import School, Profile
 
 
 class UserLoginForm(forms.Form):
@@ -26,7 +26,7 @@ class UserRegisterForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ('username',)
+        fields = ('username', 'first_name', 'last_name')
 
     # 对两次输入的密码是否一致进行检查
     def clean_password2(self):
@@ -49,10 +49,15 @@ class UserRegisterForm(forms.ModelForm):
         schools = School.objects.all()
         for school in schools:
             if user_email_domin in school.school_emails:
+                print('mail check OK')
                 return data.get('email')
         raise forms.ValidationError("该邮箱暂不支持")
 
-# class ProfileForm(forms.ModelForm):
-#     class Meta:
-#         model = Profile
-#         fields = ('phone', 'avatar', 'bio')
+
+class ProfileRegisterForm(forms.ModelForm):
+    '''
+    定义注册时, 用户的扩展表单
+    '''
+    class Meta:
+        model = Profile
+        fields = ('school', 'phone')
