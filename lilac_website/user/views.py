@@ -1,11 +1,20 @@
 from django.shortcuts import render, HttpResponse
-from .forms import UserLoginForm
 # 认证组件
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
+from .forms import UserLoginForm, UserRegisterForm
 
 
 # Create your views here.
 def user_login(request):
+    """
+        登录页面的view方法, 自动调用django的认证模块的登录
+
+        Args:
+            None
+
+        Returns:
+            None
+    """
     if request.method == 'POST':
         user_login_form = UserLoginForm(data=request.POST)
         if user_login_form.is_valid():
@@ -24,3 +33,41 @@ def user_login(request):
         return render(request, 'user/login.html', context)
     else:
         return HttpResponse("请使用POST或者GET方法")
+
+
+def user_logout(request):
+    """
+        注销页面的view方法, 自动调用django的认证模块的logout
+
+        Args:
+            None
+
+        Returns:
+            None
+    """
+    logout(request)
+    return HttpResponse("TODO: 登出成功")
+
+
+# 用户注册
+def user_register(request):
+    if request.method == 'POST':
+        user_register_form = UserRegisterForm(data=request.POST)
+        if user_register_form.is_valid():
+            new_user = user_register_form.save(commit=False)
+            # 设置密码
+            new_user.set_password(user_register_form.cleaned_data['password'])
+            new_user.save()
+            # 保存好数据后立即登录并返回博客列表页面
+            login(request, new_user)
+            return HttpResponse("TODO: 注册成功")
+        else:
+            print("error")
+            print(user_register_form.errors)
+            return HttpResponse(user_register_form.errors)
+    elif request.method == 'GET':
+        user_register_form = UserRegisterForm()
+        context = {'form': user_register_form}
+        return render(request, 'user/register.html', context)
+    else:
+        return HttpResponse("请使用GET或POST请求数据")
