@@ -2,8 +2,12 @@
 
 from django.views import View
 from django.shortcuts import render, HttpResponse
+# 用户模型
+from django.contrib.auth.models import User
 # 认证组件
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.hashers import check_password
+# 自定义表格
 from .forms import UserLoginForm, UserRegisterForm, ProfileRegisterForm
 
 
@@ -22,7 +26,8 @@ def user_login(request):
         user_login_form = UserLoginForm(data=request.POST)
         if user_login_form.is_valid():
             data = user_login_form.cleaned_data
-            user = authenticate(username=data['username'], password=data['password'])
+            user = authenticate(username=data['username'],
+                                password=data['password'])
             if user:
                 login(request, user)
                 return HttpResponse("TODO: 登录成功")
@@ -68,7 +73,10 @@ class UserRegisterView(View):
         '''
         user_register_form = UserRegisterForm()
         profile_register_form = ProfileRegisterForm()
-        context = {'form': user_register_form, 'profile_form': profile_register_form}
+        context = {
+            'form': user_register_form,
+            'profile_form': profile_register_form
+        }
         return render(request, 'user/register.html', context)
 
     def post(self, request):
@@ -97,3 +105,39 @@ class UserRegisterView(View):
             # 保存好数据后立即登录并返回博客列表页面
             login(request, new_user)
             return HttpResponse("TODO: 注册成功")
+        else:
+            # 这里回返回错误信息, 但是实际的时候使用ajax更改页面禁止提交, 这里只是考虑非法提交绕过ajax时候的情况
+            return HttpResponse("填写信息有误, 请重新填写<br>错误信息: <br>" +
+                                user_register_form.errors.as_text() +
+                                profile_register_form.errors.as_text())
+
+
+# 验证用户填写的信息
+def user_signup_in_validate(request):
+    '''
+        验证用户登录或者注册时候的信息合法性, 这是暴露给AJAX的接口
+        Args:
+            request: 系统请求类, 包含AJAX提交的信息
+
+        Returns:
+            render: 返回验证的结果
+    '''
+    data = request.POST  # 拿去post数据
+    on_validate_type = data.get('type')
+
+    # 以下是登录验证
+    if on_validate_type == 'login':
+        username = data.get('username')
+        password = data.get('password')
+        if User.objects.filter(username__iexact=username).exists():
+            user = User.objects.get(username__iexact=username)
+            if check_password(password, user.password):
+                return HttpResponse('200')
+            else:
+                # 错误的密码
+                return HttpResponse('403')
+        else:
+            # 找不到的用户名
+            return HttpResponse('403')
+    # 非法的数据格式
+    return HttpResponse('403')
