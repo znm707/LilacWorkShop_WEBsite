@@ -82,3 +82,19 @@ class ProfileRegisterForm(forms.ModelForm):
         '''
         model = Profile
         fields = ('school', 'phone')
+
+
+class ProfileEditForm(forms.ModelForm):
+    '''
+    定义用户编辑个人资料时, 用户的扩展表单
+    '''
+    class Meta:
+        '''
+            定义元数据, 使用Profile模型, 必须填写school 和 phone字段
+        '''
+        model = Profile
+        fields = ('phone', 'avatar', 'body',)
+
+
+# class ProfileForm(forms.ModelForm):
+#     class Meta:

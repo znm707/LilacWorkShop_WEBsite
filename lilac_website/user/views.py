@@ -4,12 +4,17 @@ from django.views import View
 from django.shortcuts import render, HttpResponse
 # 用户模型
 from django.contrib.auth.models import User
+# 快捷方式 获取用户或者404
+from django.shortcuts import get_object_or_404
 # 认证组件
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.hashers import check_password
+# 验证登录修饰器
+from django.utils.decorators import method_decorator
+from django.contrib.auth.decorators import login_required
 # 自定义表格
-from .forms import UserLoginForm, UserRegisterForm, ProfileRegisterForm
-from .models import School
+from .forms import UserLoginForm, UserRegisterForm, ProfileRegisterForm, ProfileEditForm
+from .models import School, Profile
 
 
 # Create your views here.
@@ -111,6 +116,68 @@ class UserRegisterView(View):
             return HttpResponse("填写信息有误, 请重新填写<br>错误信息: <br>" +
                                 user_register_form.errors.as_text() +
                                 profile_register_form.errors.as_text())
+
+
+# 修改用户信息
+class UserInfoChangeView(View):
+    '''
+        用户修改个人信息时调用的类视图, 所有请求需要验证登录
+    '''
+    @method_decorator(login_required(login_url='/user/login/'))
+    def post(self, request, id):
+        '''
+            返回注册页面
+            Args:
+                request: 系统请求类, 包含用户必要的信息
+                id: User的id, pk
+            Returns:
+                render: 返回渲染的修改用户信息的页面
+        '''
+        user = get_object_or_404(User, pk=id)
+        # 判断profile是否存在,如果不存在就新建, 如果存在就不创建
+        if Profile.objects.filter(user_id=id).exists():
+            profile = Profile.objects.get(user_id=id)
+        else:
+            profile = Profile.objects.create(user=user)
+        # 验证修改数据者，是否为用户本人
+        if request.user != user:
+            return HttpResponse("你没有权限修改此用户信息")
+
+        profile_form = ProfileEditForm(data=request.POST, files=request.FILES)
+        if profile_form.is_valid():
+            # 取得清洗后的合法数据
+            profile_cd = profile_form.cleaned_data
+            profile.phone = profile_cd['phone']
+            profile.body = profile_cd['body']
+            profile.avatar = profile_cd['avatar']
+            profile.save()
+            # 带参数的 redirect()
+            return HttpResponse("修改成功")
+        else:
+            return HttpResponse("注册表单输入有误。请重新输入~")
+
+    @method_decorator(login_required(login_url='/user/login/'))
+    def get(self, request, id):
+        '''
+            返回注册页面
+            Args:
+                request: 系统请求类, 包含用户必要的信息
+                id: User的id, pk
+            Returns:
+                render: 返回渲染的修改用户信息的页面
+        '''
+        user = get_object_or_404(User, pk=id)
+        if request.user == user:
+            # 判断profile是否存在,如果不存在就新建, 如果存在就不创建
+            if Profile.objects.filter(user_id=id).exists():
+                profile = Profile.objects.get(user_id=id)
+            else:
+                profile = Profile.objects.create(user=user)
+            profile_form = ProfileEditForm(initial={'body': profile.body})  # 为了使用富文本编辑器, 将个人简介加入到初始化内容当中
+            context = {'profile': profile, 'user': user, 'bio_form': profile_form}
+            return render(request, 'user/edit.html', context)
+        else:
+            return HttpResponse('403 您无权访问')
 
 
 # 验证用户填写的信息
