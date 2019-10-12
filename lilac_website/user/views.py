@@ -1,7 +1,7 @@
 # coding: utf-8
 
 from django.views import View
-from django.shortcuts import render, HttpResponse
+from django.shortcuts import render, HttpResponse, redirect
 # 用户模型
 from django.contrib.auth.models import User
 # 快捷方式 获取用户或者404
@@ -79,9 +79,11 @@ class UserRegisterView(View):
         '''
         user_register_form = UserRegisterForm()
         profile_register_form = ProfileRegisterForm()
+        school_list = School.objects.all().values('id', 'school_name')
         context = {
             'form': user_register_form,
-            'profile_form': profile_register_form
+            'profile_form': profile_register_form,
+            'school_list': school_list
         }
         return render(request, 'user/register.html', context)
 
@@ -99,6 +101,7 @@ class UserRegisterView(View):
         if user_register_form.is_valid() and profile_register_form.is_valid():
             new_user = user_register_form.save(commit=False)
             user_register_form_data = user_register_form.cleaned_data
+            userprofile_form_data = profile_register_form.cleaned_data
             # 设置密码
             new_user.set_password(user_register_form_data['password'])
             # 设置email
@@ -107,10 +110,12 @@ class UserRegisterView(View):
             # 保存用户的扩展信息
             new_user_profile = profile_register_form.save(commit=False)
             new_user_profile.user = new_user  # 与用户进行链接
+            school = get_object_or_404(School, pk=userprofile_form_data['school'])
+            new_user_profile.school = school
             new_user_profile.save()
             # 保存好数据后立即登录并返回博客列表页面
             login(request, new_user)
-            return HttpResponse("TODO: 注册成功")
+            return redirect('user:edituserinfo', id=new_user.id)
         else:
             # 这里回返回错误信息, 但是实际的时候使用ajax更改页面禁止提交, 这里只是考虑非法提交绕过ajax时候的情况
             return HttpResponse("填写信息有误, 请重新填写<br>错误信息: <br>" +

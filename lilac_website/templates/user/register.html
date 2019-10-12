@@ -21,9 +21,15 @@
                     <label for="username">名</label>
                     <input type="text" class="form-control" id="first_name" name="first_name" required>
                 </div>
-                <!-- 学校和手机号-->
+                <!-- 学校 -->
                 <div class="form-group col-md-4">
-                    {{ profile_form.as_p }}
+                    <label for="email">学校</label>
+                    <p><select name="school" required id="id_school">
+                        <option id="name" value="" selected>---------</option>
+                        {% for school in school_list %}
+                        <option id="name" value="{{school.id}}">{{school.school_name}}</option>
+                        {% endfor %}
+                    </select></p>
                 </div>
                 <!-- 手机 -->
                 <div class="form-group col-md-4">

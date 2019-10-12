@@ -76,12 +76,14 @@ class ProfileRegisterForm(forms.ModelForm):
     '''
     定义注册时, 用户的扩展表单
     '''
+    school = forms.IntegerField()  # 用于存储所选学校的id
+
     class Meta:
         '''
             定义元数据, 使用Profile模型, 必须填写school 和 phone字段
         '''
         model = Profile
-        fields = ('school', 'phone')
+        fields = ('phone',)
 
 
 class ProfileEditForm(forms.ModelForm):
@@ -94,7 +96,3 @@ class ProfileEditForm(forms.ModelForm):
         '''
         model = Profile
         fields = ('phone', 'avatar', 'body',)
-
-
-# class ProfileForm(forms.ModelForm):
-#     class Meta:
