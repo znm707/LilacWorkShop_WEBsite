@@ -1,0 +1,46 @@
+{% extends "base.html" %} {% load staticfiles %}
+{% block title %} 用户信息 {% endblock title %}
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <!-- 显示用户名 -->
+            {% if user.username %}
+                <br>
+                <div class="col-md-4">用户名: {{ user.username }}</div>
+                <br>
+            {% endif %}
+            <!-- 显示姓名 -->
+            <div class="col-md-4">姓名: {{ user.last_name }}{{ user.first_name }}</div>
+            <br>
+            <!-- 显示学校 -->
+            <div class="col-md-4">学校: {{ profile.school.school_name }}</div>
+            <br>
+            <!-- 显示头像 -->
+            {% if profile.avatar %}
+                <div class="col-md-4">头像</div>
+                <img src="{{ profile.avatar.url }}" style="max-width: 20%; border-radius: 15%;" class="col-md-4">
+            {% else %}
+                <img src="{% static '/avatar/noavatar.jpeg' %}"  alt="暂无头像" height="150"/>
+            {% endif %}
+            <br>
+            <!-- 显示电话 -->
+            {% if profile.phone %}
+                <br>
+                <div class="col-md-4">电话: {{ profile.phone }}</div>
+                <br>
+            {% endif %}
+            <!-- 显示简介 -->
+            <br>
+            <label for="bio">简介</label>
+            <div class="col-md-12">{{ profile.body }}</div>
+            <br>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block script %}
+
+{% endblock script %}

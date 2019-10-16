@@ -13,6 +13,8 @@ urlpatterns = [
     path('register/', views.UserRegisterView.as_view(), name='register'),
     # 用户编辑个人信息
     path('edituserinfo/<int:id>/', views.UserInfoChangeView.as_view(), name='edituserinfo'),
+    # 查看用户信息
+    path('userinfo/<int:id>/', views.user_info, name='userinfo'),
     # 用户信息验证
     path('user-signinup-validate', views.user_signup_in_validate, name='user_signinup_validate'),
 ]

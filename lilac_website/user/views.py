@@ -123,6 +123,58 @@ class UserRegisterView(View):
                                 profile_register_form.errors.as_text())
 
 
+# 验证用户注册时填写的信息
+def user_signup_in_validate(request):
+    '''
+        验证用户登录或者注册时候的信息合法性, 这是暴露给AJAX的接口
+        Args:
+            request: 系统请求类, 包含AJAX提交的信息
+
+        Returns:
+            render: 返回验证的结果
+    '''
+    data = request.POST  # 拿去post数据
+    on_validate_type = data.get('type')
+
+    if on_validate_type == 'login':
+        # 以下是登录验证
+        username = data.get('username')
+        password = data.get('password')
+        if User.objects.filter(username__iexact=username).exists():
+            user = User.objects.get(username__iexact=username)
+            if check_password(password, user.password):
+                return HttpResponse('200')
+            else:
+                # 错误的密码
+                return HttpResponse('403')
+        else:
+            # 找不到的用户名
+            return HttpResponse('403')
+    # ---------------------以下是注册验证---------------------
+    elif on_validate_type == 'username':
+        if User.objects.filter(username__iexact=data.get('username')).exists():
+            # 用户名存在
+            return HttpResponse('403')
+        # 用户名可以注册
+        return HttpResponse('200')
+    elif on_validate_type == 'email':
+        user_email = data.get('email')
+        # 检查邮箱是否存在
+        if User.objects.filter(email__iexact=user_email).exists():
+            # 邮箱已经被注册了
+            return HttpResponse('403')
+        # 检查邮箱是否在可用列表中
+        user_email_domin = user_email[(user_email.find('@')+1):]  # 取出用户邮箱域名
+        schools = School.objects.all()
+        for school in schools:
+            if user_email_domin in school.school_emails:
+                return HttpResponse('200')
+        # 邮箱不在可注册列表中
+        return HttpResponse('404')
+    # 非法的数据格式
+    return HttpResponse('403')
+
+
 # 修改用户信息
 class UserInfoChangeView(View):
     '''
@@ -185,53 +237,32 @@ class UserInfoChangeView(View):
             return HttpResponse('403 您无权访问')
 
 
-# 验证用户填写的信息
-def user_signup_in_validate(request):
-    '''
-        验证用户登录或者注册时候的信息合法性, 这是暴露给AJAX的接口
-        Args:
-            request: 系统请求类, 包含AJAX提交的信息
+# 查看用户信息
+@login_required(login_url='/user/login/')
+def user_info(request, id):
+    user = get_object_or_404(User, pk=id)
+    profile = user.profile
+    is_admin = profile.role == 'TE'
 
-        Returns:
-            render: 返回验证的结果
-    '''
-    data = request.POST  # 拿去post数据
-    on_validate_type = data.get('type')
-
-    if on_validate_type == 'login':
-        # 以下是登录验证
-        username = data.get('username')
-        password = data.get('password')
-        if User.objects.filter(username__iexact=username).exists():
-            user = User.objects.get(username__iexact=username)
-            if check_password(password, user.password):
-                return HttpResponse('200')
-            else:
-                # 错误的密码
-                return HttpResponse('403')
-        else:
-            # 找不到的用户名
-            return HttpResponse('403')
-    # ---------------------以下是注册验证---------------------
-    elif on_validate_type == 'username':
-        if User.objects.filter(username__iexact=data.get('username')).exists():
-            # 用户名存在
-            return HttpResponse('403')
-        # 用户名可以注册
-        return HttpResponse('200')
-    elif on_validate_type == 'email':
-        user_email = data.get('email')
-        # 检查邮箱是否存在
-        if User.objects.filter(email__iexact=user_email).exists():
-            # 邮箱已经被注册了
-            return HttpResponse('403')
-        # 检查邮箱是否在可用列表中
-        user_email_domin = user_email[(user_email.find('@')+1):]  # 取出用户邮箱域名
-        schools = School.objects.all()
-        for school in schools:
-            if user_email_domin in school.school_emails:
-                return HttpResponse('200')
-        # 邮箱不在可注册列表中
-        return HttpResponse('404')
-    # 非法的数据格式
-    return HttpResponse('403')
+    if request.user == user or is_admin:
+        # 可以查询详细信息
+        context = {
+            'user': user,
+            'profile': profile,
+        }
+        return render(request, 'user/userinfo.html', context)
+    else:
+        # 只能查询部分信息
+        mini_user = {
+            'name': user.last_name + user.first_name,
+        }
+        mini_profile = {
+            'avatar': profile.avatar,
+            'school': profile.school,
+            'body': profile.body,
+        }
+        context = {
+            'user': mini_user,
+            'profile': mini_profile,
+        }
+        return render(request, 'user/userinfo.html', context)
