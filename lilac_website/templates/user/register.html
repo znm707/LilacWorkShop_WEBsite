@@ -1,0 +1,257 @@
+{% extends "base.html" %} {% load staticfiles %}
+{% block title %} 注册 {% endblock title %}
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <br>
+            <form class="signup" id="signup_form" method="post" action=".">
+                {% csrf_token %}
+                <!-- 账号 -->
+                <div class="form-group col-md-4">
+                    <label for="username">用户名</label>
+                    <input type="text" class="form-control" id="id_username" name="username" required>
+                </div>
+                <!-- 姓名 -->
+                <div class="form-group col-md-4">
+                    <label for="username">姓</label>
+                    <input type="text" class="form-control" id="last_name" name="last_name" required>
+                </div>
+                <div class="form-group col-md-4">
+                    <label for="username">名</label>
+                    <input type="text" class="form-control" id="first_name" name="first_name" required>
+                </div>
+                <!-- 学校 -->
+                <div class="form-group col-md-4">
+                    <label for="email">学校</label>
+                    <p><select name="school" required id="id_school">
+                        <option id="name" value="" selected>---------</option>
+                        {% for school in school_list %}
+                        <option id="name" value="{{school.id}}">{{school.school_name}}</option>
+                        {% endfor %}
+                    </select></p>
+                </div>
+                <!-- 手机 -->
+                <div class="form-group col-md-4">
+                    <label for="email">手机</label>
+                    <input type="text" class="form-control" id="id_phone" name="phone">
+                </div>
+                <!-- 邮箱 -->
+                <div class="form-group col-md-4">
+                    <label for="email">Email</label>
+                    <input type="text" class="form-control" id="id_email" name="email">
+                </div>
+                <!-- 密码 -->
+                <div class="form-group col-md-4">
+                    <label for="password">设置密码</label>
+                    <input type="password" class="form-control" id="id_password1" name="password" required>
+                </div>
+                <!-- 确认密码 -->
+                <div class="form-group col-md-4">
+                    <label for="password2">确认密码</label>
+                    <input type="password" class="form-control" id="id_password2" name="password2" required>
+                </div>
+                <!-- 提交按钮 -->
+                <button type="submit" class="btn btn-primary" id="submit_signup" hidden>确认 &raquo;</button>
+                <button type="button" class="btn btn-primary" id="on_submit_signup">确认 &raquo;</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block script %}
+<script src="{% static 'csrf.js' %}"></script>
+<script>
+$(() => {
+    // username 验证
+    const on_submit_signup = $('#on_submit_signup');
+    const username_input = $('#id_username');
+    username_input.on('change', (event) => {
+        let data = {
+            'username': event.delegateTarget.value,
+            'type': 'username'
+        };
+        username_validate(data);
+    });
+
+    const username_validate = async (data) => {
+        if (!data.username) {
+            username_input.addClass('breath-input');
+            var username_tips = layer.tips('请填写用户名', username_input, {
+                time: 4000,
+                area: ['auto', 'auto'],
+                tips: [2, 'indianred'],
+                tipsMore: true
+            });
+            return false;
+        }
+        let res = await $.post("{% url 'user:user_signinup_validate' %}", data,
+            function (data, status) {
+                if (data === '403') {
+                    username_input.addClass('breath-input');
+                    var username_tips = layer.tips('用户名已被注册', username_input, {
+                        time: 4000,
+                        area: ['auto', 'auto'],
+                        tips: [2, 'indianred'],
+                        tipsMore: true
+                    });
+                } else {
+                    username_input.removeClass('breath-input');
+                }
+            },
+        ).fail((response) => {
+            on_submit_signup.removeAttr('disabled').empty().append('确认 &raquo;');
+            layer.msg('与服务器通讯失败..<br/>重试一下呗o(╥﹏╥)o')
+        });
+
+        if (res === '200') {
+            return true;
+        } else {
+            return false;
+        }
+    };
+
+    // email 验证
+    const email_input = $('#id_email');
+    email_input.on('change', (event) => {
+        let data = {
+            'email': event.delegateTarget.value,
+            'type': 'email'
+        };
+        email_validate(data);
+    });
+
+    const email_validate = async (data) => {
+        if (!data.email) {
+            email_input.addClass('breath-input');
+            var email_tips = layer.tips('请填写邮箱哟', email_input, {
+                time: 4000,
+                area: ['auto', 'auto'],
+                tips: [2, 'indianred'],
+                tipsMore: true
+            });
+            return false;
+        }
+        let res = await $.post("{% url 'user:user_signinup_validate' %}", data,
+            function (data, status) {
+                if (data === '403') {
+                    email_input.addClass('breath-input');
+                    var email_tips = layer.tips('此邮箱已被注册', email_input, {
+                        time: 4000,
+                        area: ['auto', 'auto'],
+                        tips: [2, 'indianred'],
+                        tipsMore: true
+                    });
+                } else if (data === '404'){
+                    email_input.addClass('breath-input');
+                    var email_tips = layer.tips('在邮箱暂时不在可注册列表中', email_input, {
+                        time: 4000,
+                        area: ['auto', 'auto'],
+                        tips: [2, 'indianred'],
+                        tipsMore: true
+                    });
+                }else{
+                    email_input.removeClass('breath-input');
+                }
+            },
+        ).fail((response) => {
+            on_submit_signup.removeAttr('disabled').empty().append('确认 &raquo;');
+            layer.msg('与服务器通讯失败..<br/>重试一下呗o(╥﹏╥)o')
+        });
+
+        if (res === '200') {
+            return true;
+        } else {
+            return false;
+        }
+    };
+
+    // password1 验证
+    const password1_input = $('#id_password1');
+    password1_input.on('change', (event) => {
+        let password1 = event.delegateTarget.value;
+        password1_validate(password1);
+    });
+
+    const password1_validate = (password1) => {
+        console.log(typeof(password1))
+        const regNumber = /\d+/;
+        const regString = /[a-zA-Z]+/;
+        if (!regNumber.test(password1) || !regString.test(password1) || password1.length < 8) {
+            console.log(regNumber.test(password1))
+            console.log(regString.test(password1))
+            
+            console.log(password1.length < 8)
+            password1_input.addClass('breath-input');
+            var password1_tips = layer.tips('请输入8位或以上字母/数字组合', password1_input, {
+                time: 4000,
+                area: ['auto', 'auto'],
+                tips: [2, 'indianred'],
+                tipsMore: true
+            });
+            return false;
+        } else {
+            password1_input.removeClass('breath-input');
+            return true;
+        }
+    };
+
+    // password2 验证
+    const password2_input = $('#id_password2');
+    password2_input.on('change', (event) => {
+        let password2 = event.delegateTarget.value;
+        password2_validate(password2);
+    });
+
+    const password2_validate = (password2) => {
+        if (password2 !== password1_input.val()) {
+            password2_input.addClass('breath-input');
+            var password2_tips = layer.tips('两次输入密码不一致', password2_input, {
+                time: 4000,
+                area: ['auto', 'auto'],
+                tips: [2, 'indianred'],
+                tipsMore: true
+            });
+            return false;
+        } else {
+            password2_input.removeClass('breath-input');
+            return true;
+        }
+    };
+
+    // 提交验证
+    on_submit_signup.on('click', async function (event) {
+
+        on_submit_signup.attr('disabled', 'disabled').empty().append('确认中.. ').append(
+            '<span class="spinner-border spinner-border-sm text-light" role="status">\n' +
+            '  <span class="sr-only">Loading...</span>\n' +
+            '</span>'
+        );
+
+        const params = $("#signup_form").serializeArray();
+        let data = {};
+        for (let x in params) {
+            data[params[x].name] = params[x].value;
+        }
+        console.log(data)
+        let is_password2_pass = password2_validate(data.password2);
+        let is_password1_pass = password1_validate(data.password);
+        let is_email_pass = await email_validate({
+            'type': 'email',
+            'email': data.email
+        });
+        let is_username_pass = await username_validate({
+            'type': 'username',
+            'username': data.username
+        });
+
+        if (is_password1_pass && is_password2_pass && is_username_pass && is_email_pass) {
+            $('#submit_signup').click();
+        } else {
+            on_submit_signup.removeAttr('disabled').empty().append('确认 &raquo;');
+        }
+    });
+});
+</script>
+{% endblock script %}

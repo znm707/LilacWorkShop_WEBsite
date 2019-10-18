@@ -1,0 +1,88 @@
+{% extends "base.html" %} {% load staticfiles %}
+{% block title %} 登录 {% endblock title %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-lg-5 col-md-4 col-sm-3 col-2"></div>
+            <br>
+            <form class="login" id="login_form" method="post" action=".">
+                {% csrf_token %}
+                <!-- 账号 -->
+                <br>
+                <br>
+                <br>
+                <div class="form-group">
+                    <label for="username">账号</label>
+                    <input type="text" name="username" placeholder="请输入用户名" autofocus="autofocus" required
+                            id="id_username" class="form-control" />
+                </div>
+                <small class="form-text text-muted ml-1">
+                    还没有账号？
+                    <a href="{% url 'user:register' %}" style="color: cornflowerblue; ">
+                        注册新账号
+                    </a>
+                </small>
+                <!-- 密码 -->
+                <div class="form-group">
+                    <label for="password">密码</label>
+                    <input type="password" class="form-control" id="password" name="password">
+                </div>
+                <!-- 提交按钮, 两个按钮, 提交按钮被隐藏, 由js触发 -->
+                <button class="primaryAction btn btn-primary" type="submit" hidden id="submit_login">确认</button>
+                <button class="primaryAction btn btn-primary" type="button" id="on_submit_login">确认</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block script %}
+<script src="{% static 'csrf.js' %}"></script>
+<script>
+    // login提交验证
+const on_submit_login = $('#on_submit_login');
+on_submit_login.on('click', async function (event) {
+    console.log('in on click');
+    on_submit_login.attr('disabled', 'disabled').empty().append('确认中.. ').append(
+        '<span class="spinner-border spinner-border-sm text-light" role="status">\n' +
+        '  <span class="sr-only">Loading...</span>\n' +
+        '</span>'
+    );
+
+    const params = $("#login_form").serializeArray();
+    let data = {};
+    for (let x in params) {
+        data[params[x].name] = params[x].value;
+    }
+    console.log(data)
+
+    let is_login_pass = await login_validate({
+        'type': 'login',
+        'username': data.username,
+        'password': data.password
+    });
+
+    if (is_login_pass) {
+        $('#submit_login').click();
+    } else {
+        on_submit_login.removeAttr('disabled').empty().append('确认 &raquo;');
+        layer.msg('账号或密码错误<br/>重新试一下呗~')
+    }
+});
+
+const login_validate = async (data) => {
+    console.log(data)
+    let res = await $.post("{% url 'user:user_signinup_validate' %}", data).fail((response) => {
+        on_submit_login.removeAttr('disabled').empty().append('确认 &raquo;');
+        layer.msg('与服务器通讯失败..<br/>重试一下呗o(╥﹏╥)o')
+    });
+
+    if (res === '200') {
+        return true;
+    } else {
+        return false;
+    }
+};
+</script>
+{% endblock script %}
