@@ -25,6 +25,7 @@ class ProjectPage(models.Model):
         processors=[ResizeToFit(width=400)],
         format='JPEG',
         options={'quality': 100},
+        blank=True
     )
     # 是否在项目页可见, 因为首页可能有一些紫丁香相关的介绍, 因此需要一些非项目的文章
     # 该字段用于确保非项目的文章在项目页不被显示
@@ -40,7 +41,9 @@ class ProjectPage(models.Model):
     # 发起者, 一对多， 即一个内容发布者可以发布多个项目， 当内容发起者被删除时，其发布的项目同样被删除
     publisher = models.ForeignKey(User, on_delete=models.CASCADE, related_name='publisher')
     # 参与者, 多对多， 即一个项目可以有多个参与者， 一个参与者可以参与多个项目
-    worker = models.ManyToManyField(User)
+    workers = models.ManyToManyField(User)
+    # 申请者, 多对多， 即一个项目可以有多个申请者， 一个申请者可以申请多个项目
+    applicants = models.ManyToManyField(User,related_name='applicants')
     # 创建时间
     created = models.DateTimeField(default=timezone.now)
     # 文章更新时间

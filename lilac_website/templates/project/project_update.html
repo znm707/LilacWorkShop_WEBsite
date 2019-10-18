@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+<script src="JavaScript/ckeditor/ckeditor.js" type="text/javascript"></script>
+{% block title %} 更新项目 {% endblock title %}
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <br>
+            <form method="post" action="." enctype="multipart/form-data">
+                <!-- Django中需要POST数据的地方都必须有csrf_token -->
+                {% csrf_token %}
+                <!-- 项目标题 -->
+                <div class="form-group">
+                    <label for="title">项目标题</label>
+                    <input type="text" class="form-control" id="title" name="title" value="{{ project.title }}">
+                </div>
+                <!-- 项目摘要 -->
+                <div class="form-group">
+                    <label for="abstract">项目摘要</label>
+                    <input type="text" class="form-control" id="abstract" name="abstract" value="{{ project.abstract }}">
+                </div>
+                <!-- 项目关键词 -->
+                <div class="form-group">
+                    <label for="tags">关键词</label>
+                    <input type="text" class="form-control col-3" id="tags" name="tags" >
+                    <p class="help-block" style="color: rgb(180, 180, 180);">请使用逗号分隔关键词</p>
+                </div>
+                <!-- 项目详情 -->
+                <div class="form-group">
+                    <label>详细方案</label>
+                    <hr>
+                    {{ project_form.media }}
+                    {{ project_form.body }}
+                    <hr>
+                </div>
+                <!-- 参与者列表 -->
+                <div id="workers" class="form-group">
+                    <label>当前参与者列表:</label>
+                    <br>
+                    {% for worker in project.workers.all %}
+                        {% if worker.username != project.publisher.username %}
+                            <label>
+                            {{ worker.username }}
+                            <input type="checkbox" name="checkbox_worker" value="{{ worker.username }}" onclick="delete_worker()">
+                            </label>
+                            <br>
+                        {% endif %}
+                    {% endfor %}
+                    <!-- 全部要处理的用户的名字的连接的字符串 -->
+                    <input type="text" class="form-control" id="workers_delete" name="workers_delete" style="display:none">
+                    <p class="help-block" style="color: rgb(180, 180, 180);">请选中要移除的参与者</p>
+	            </div>
+                <hr>
+                <!-- 申请者列表 -->
+                <div id="applicants" class="form-group">
+                    <label>当前报名者列表:</label>
+                    <br>
+                    {% for applicant in project.applicants.all %}
+                     <label>
+                         {{ applicant.username }}
+                         <input type="checkbox" name="checkbox_app_add" value="{{ applicant.username }}" onclick="app()">通过
+                         <input type="checkbox" name="checkbox_app_delete" value="{{ applicant.username }}" onclick="app()">不通过
+                     </label>
+                    <br>
+                    {% endfor %}
+                    <!-- 全部要处理的用户的名字的连接的字符串 -->
+                    <input type="text" class="form-control" id="applicants_add" name="applicants_add" style="display:none">
+                    <input type="text" class="form-control" id="applicants_delete" name="applicants_delete" style="display:none">
+	            </div>
+                <!-- 标题图 -->
+                <div class="form-group">
+                    <label for="avatar">上传标题图</label>
+                    <input type="file" class="form-control-file" name="avatar" id="avatar">
+                </div>
+                <!-- 提交按钮 -->
+                <button type="submit" class="btn btn-primary">完成</button>
+            </form>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+    //在标签input中显示标签
+    {% for tag in project.tags.all %}
+        document.getElementById("tags").value += {{ tag }}
+        document.getElementById("tags").value += ","
+    {% endfor %}
+    str = document.getElementById("tags").value;
+    str = str.slice(0,str.length-1);
+    document.getElementById("tags").value = str;
+</script>
+<script type="text/javascript">
+    //处理申请者
+    function app(){
+        app_add = document.getElementsByName("checkbox_app_add");
+        app_delete = document.getElementsByName("checkbox_app_delete");
+        var text_add = "";
+        var text_delete = "";
+        for(i=0;i<app_add.length;i++)
+        {
+            if(app_add[i].checked && app_delete[i].checked)//如果通过与不通过都勾选，则提示不正确，清空改行勾选
+            {
+                text_add = "";
+                text_delete = "";
+                alert("请正确勾选");
+                app_add[i].checked = false;
+                app_delete[i].checked = false;
+                break;
+            }
+            if(app_add[i].checked)
+            {
+                text_add += app_add[i].value;
+                text_add += " ";
+            }
+            if(app_delete[i].checked)
+            {
+                text_delete += app_delete[i].value;
+                text_delete += " ";
+            }
+        }
+        document.getElementById("applicants_add").value = text_add;
+        document.getElementById("applicants_delete").value = text_delete;
+    }
+    //删除参与者
+    function delete_worker(){
+        worker_list = document.getElementsByName("checkbox_worker");
+        var worker_text = "";
+        for(i=0;i<worker_list.length;i++)
+        {
+            if(worker_list[i].checked)
+            {
+                worker_text += worker_list[i].value;
+                worker_text += " ";
+            }
+        }
+        document.getElementById("workers_delete").value = worker_text;
+    }
+</script>
+{% endblock content %}

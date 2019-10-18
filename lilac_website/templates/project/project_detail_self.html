@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+<!-- 写入 base.html 中定义的 title -->
+{% block title %}
+    项目详情
+{% endblock title %}
+
+<!-- 写入 base.html 中定义的 content -->
+{% block content %}
+<!-- 项目详情 -->
+<div class="container">
+    <div class="row">
+        <h1 style="text-align:center" class="col-12 mt-4 mb-4">{{ project.title }}</h1>
+        <div class="col-sm-9">
+            <div class="col-12 alert alert-success">
+                发布者：{{ project.publisher }}
+                <a href="#" onclick="confirm_safe_delete()">删除项目</a>
+                <a href="{% url 'project:project_update' project.id %}">更新项目内容</a>
+            </div>
+            <!-- 表单跳转删除项目 -->
+            <form
+            style="display:none;"
+            id="safe_delete"
+            action="{% url 'project:project_safe_delete' project.id %}"
+            method="POST"
+            >
+            {% csrf_token %}
+                <button type="submit">发送</button>
+            </form>
+            <!-- 参与者 -->
+            <div class="col-12 alert alert-success">当前参与者：
+            {% for worker in project.workers.all %}
+                {{ worker.username }}
+            {% endfor %}
+            </div>
+            <!-- 摘要 -->
+            <div class="col-12 alert alert-success">摘要：{{ project.abstract }}</div>
+            <!-- 关键字 -->
+            <div class="col-12 alert alert-success">关键字：
+            {% for tag in project.tags.all %}
+                {{ tag }}
+            {% endfor %}
+            </div>
+            </div>
+            <!-- 标题图 -->
+            {% if project.avatar %}
+            <div class="col-sm-3">
+                <img class="img-responsive" height="250px" src="{{ project.avatar.url }}">
+            </div>
+            {% endif %}
+        <!-- 项目正文 -->
+        <div class="col-12">
+            <h2>详细方案：</h2>
+            <hr>
+            <p>{{ project.body|safe }}</p>
+            <hr>
+        </div>
+    </div>
+    <!-- 报名者列表 -->
+    <div class="form-group">
+        <label>当前报名者列表</label>
+        <select id="select_list" class="form-control" multiple="multiple" size="5">
+            {% for applicant in project.applicants.all %}
+            <option>{{ applicant.username }}</option>
+            {% endfor %}
+        </select>
+	</div>
+    <!-- 时间信息 -->
+    <div>
+        <p class="text-right"><em>项目发布时间：{{ project.created }}</em></p>
+        <p class="text-right"><em>最新更新时间：{{ project.updated }}</em></p>
+    </div>
+</div>
+<script type="text/javascript">
+
+</script>
+<script>
+//实现删除文章前弹窗功能
+function confirm_safe_delete() {
+    layer.open({
+        title: "确认删除",
+        content: "确认删除项目吗？",
+        yes: function(index, layero) {
+            $('form#safe_delete button').click();
+            layer.close(index);
+        }
+    })
+}
+</script>
+{% endblock content %}
