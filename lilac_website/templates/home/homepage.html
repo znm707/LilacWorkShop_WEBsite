@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+
+<!-- 写入 base.html 中定义的 title -->
+{% block title %}
+    紫丁香创新工场网站
+{% endblock title %}
+
+<!-- 写入 base.html 中定义的 content -->
+{% block content %}
+<div style="width: 60%;height: 60%;margin: auto;">
+    <div id="demo" class="carousel slide" data-ride="carousel">
+    <!-- 指示符 -->
+    <ul class="carousel-indicators">
+        {% for i in roll_num %}
+            {% if i == '0' %}
+                <li data-target="#demo" data-slide-to="0" class="active"></li>
+            {% else %}
+                <li data-target="#demo" data-slide-to="{{ i }}"></li>
+            {% endif %}
+        {% endfor %}
+    </ul>
+    <!-- 轮播图片 -->
+    <div class="carousel-inner" style="text-align:center">
+        {% for RollItem in RollItems %}
+            {% if RollItem.roll_rank ==  min_rollindex  %}
+                <div class="carousel-item active">
+            {% else %}
+                <div class="carousel-item">
+            {% endif %}
+                    <a href="{% url 'project:project_detail' RollItem.home_project.Home_Project.id %}">
+                    <img src="/media/{{ RollItem.home_project.Home_Project.avatar }}">
+                    <div class="carousel-caption">
+                        <h3>
+                            {{ RollItem.home_project.Home_Project.title }}
+                        </h3>
+                    </div>
+                    </a>
+                </div>
+        {% endfor %}
+    </div>
+    <!-- 左右切换按钮 -->
+    <a class="carousel-control-prev" href="#demo" data-slide="prev">
+        <span class="carousel-control-prev-icon"></span>
+    </a>
+    <a class="carousel-control-next" href="#demo" data-slide="next">
+        <span class="carousel-control-next-icon"></span>
+    </a>
+    </div>
+</div>
+<!-- 定义放置文章标题的div容器 -->
+<div class="container">
+    <div class="row mt-2">
+        {% for HomeItem in HomeItems %}
+        <!-- 项目内容 -->
+        <div class="col-4 mb-4">
+        <!-- 卡片容器 -->
+            <div class="card h-100">
+                <!-- 标题 -->
+                <h4 class="card-header">{{ HomeItem.home_project.Home_Project.title }}</h4>
+                <!-- 摘要 -->
+                <div class="card-body">
+                    <p class="card-text">{{ HomeItem.home_project.Home_Project.abstract|slice:'100' }}...</p>
+                </div>
+                <!-- 注脚 -->
+                <div class="card-footer">
+                    <a href="{% url 'project:project_detail' HomeItem.home_project.Home_Project.id %}" class="btn btn-primary">阅读本项目</a>
+                </div>
+                <!-- 显示浏览量 -->
+                <span>
+                <small class="col align-self-end" style="color: gray;">
+                    浏览: {{ HomeItem.home_project.Home_Project.total_views }}
+                </small>
+                </span>
+
+            </div>
+        </div>
+        {% endfor %}
+
+    </div>
+</div>
+</div>
+{% endblock content %}

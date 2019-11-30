@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+<!-- 写入 base.html 中定义的 title -->
+{% block title %}
+    项目详情
+{% endblock title %}
+
+<!-- 写入 base.html 中定义的 content -->
+{% block content %}
+<!-- 项目详情 -->
+<div class="container">
+    <div class="row">
+        <!-- 标题 -->
+        <h1 style="text-align:center" class="col-12 mt-4 mb-4">{{ project.title }}</h1>
+        <div class="col-sm-9">
+            <!-- 发布者 -->
+            <div class="col-12 alert alert-success">
+                发布者：{{ project.publisher }}
+            </div>
+            <!-- 参与者 -->
+            <div class="col-12 alert alert-success">当前参与者：
+            {% for worker in project.workers.all %}
+                {{ worker.username }}
+            {% endfor %}
+            </div>
+            <!-- 摘要 -->
+            <div class="col-12 alert alert-success">摘要：{{ project.abstract }}</div>
+            <!-- 关键字 -->
+            <div class="col-12 alert alert-success">关键词：
+            {% for tag in project.tags.all %}
+                {{ tag }}
+            {% endfor %}
+            </div>
+        </div>
+        <!-- 标题图 -->
+        {% if project.avatar %}
+        <div class="col-sm-3">
+            <img class="img-responsive" height="250px" src="{{ project.avatar.url }}">
+        </div>
+            {% endif %}
+        <!-- 项目正文 -->
+        <div class="col-12">
+            <h2>详细方案：</h2>
+            <!-- 报名按钮 -->
+            <div style="text-align:right">
+                {% if request.user in project.workers.all %}
+                    <button type="button" class="btn btn-default">已经是参与者</button>
+                {% elif request.user in project.applicants.all %}
+                    <button type="button" class="btn btn-default">已申请，尚未通过</button>
+                {% else %}
+                    <button type="button" class="btn btn-primary" onclick="apply()">报名参加该项目</button>
+                {% endif %}
+            </div>
+            <hr>
+            <p>{{ project.body|safe }}</p>
+            <hr>
+        </div>
+    </div>
+    <!-- 时间信息 -->
+    <div>
+        <p class="text-right"><em>项目发布时间：{{ project.created }}</em></p>
+        <p class="text-right"><em>最新更新时间：{{ project.updated }}</em></p>
+    </div>
+</div>
+<script>
+//实现报名前弹窗功能
+    function apply() {
+        // 调用layer弹窗组件
+        layer.open({
+            // 弹窗标题
+            title: "确认报名",
+            // 正文
+            content: "确认报名参加该项目吗？",
+            // 点击确定按钮后调用的回调函数
+            yes: function(index, layero) {
+                // 指定应当前往的 url
+                location.href='{% url "project:project_apply" project.id %}'
+            },
+        })
+    }
+</script>
+{% endblock content %}
