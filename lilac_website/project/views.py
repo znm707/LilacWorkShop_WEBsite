@@ -2,152 +2,181 @@
 from django.shortcuts import render,redirect
 from django.http import HttpResponse
 from django.views import View
+# messageå¦¯â€³æ½¡
 from django.contrib import messages
-# messageÄ£¿é
-from .models import ProjectPage
+# éç‰ˆåµå¦¯â€³ç€·
+from .models import ProjectPage,HomeProject
+# ç›ã„¥å´Ÿ
 from .forms import ProjectForm
+# é¢ã„¦åŸ›ç’ã‚ˆç˜‰
 from user.models import Profile
+# é’å—›ã€‰å¦¯â€³æ½¡
 from django.core.paginator import Paginator
-# ·ÖÒ³Ä£¿é
+# é¢ã„¦åŸ›å¦¯â€³ç€·
 from django.contrib.auth.models import User
-# ÓÃ»§Ä£ĞÍ
+# modelæ·‡æ¿†ç“¨æ·‡â€³å½¿
+from django.db.models.signals import post_save
 # Create your views here.
+
+# æ·‡â€³å½¿éºãƒ¦æ•¹é£îŸ’ç´æ¾§ç‚²å§æ¶“å©šã€‰æ¤¤åœ­æ´°
+def add_homeproject(sender, instance, **kwargs):
+    '''
+        senderé”›æ°«ä¿Šé™å³°å½‚é–«ä½¸æ«’
+        instance:ç»«è¯²ç–„æ¸šï¿½
+        **kwargsé”›æ°«ä¿Šé™å³°å¼¬éï¿½
+    '''
+    flag = False;
+    if instance.is_homepage == True:
+        for i in HomeProject.objects.all():
+            if  i.Home_Project == instance:
+                flag = True
+                break
+    else:
+        for i in HomeProject.objects.all():
+            if i.Home_Project == instance:
+                i.delete()
+                break
+    if flag == False:
+        HomeProject.objects.create(Home_Project=instance)
+
+# æ·‡â€³å½¿æ©ç‚´å¸´
+post_save.connect(add_homeproject, sender = ProjectPage, dispatch_uid = None)
+
 class project_view(View):
     '''
-        ÓÃ»§×¢²áÊ±µ÷ÓÃµÄÀàÊÓÍ¼
+        æ¤¤åœ­æ´°ç» ï¼„æ‚Šç‘™å——æµ˜ç»«ï¿½
     '''
     def show_list(self,request):
         '''
-            ·µ»ØÏîÄ¿ÁĞ±í
+            æ©æ–¿æ´–æ¤¤åœ­æ´°é’æ¥„ã€ƒ
             Args:
-                self: ÀàÊµÀı¶ÔÏó±¾Éí
-                request: ÏµÍ³ÇëÇóÀà, °üº¬ÓÃ»§±ØÒªµÄĞÅÏ¢
+                self: ç»«è¯²ç–„æ¸šå¬ªî‡®ç’â„ƒæ¹°éŸ¬ï¿½
+                request: ç»¯è¤ç²ºç’‡é”‹çœ°ç»«ï¿½, é–å‘­æƒˆé¢ã„¦åŸ›è¹‡å‘°î›¦é¨å‹ªä¿Šé­ï¿½
             Returns:
-                render: ·µ»ØÏîÄ¿ÁĞ±íÒ³Ãæ
+                render: æ©æ–¿æ´–æ¤¤åœ­æ´°é’æ¥„ã€ƒæ¤¤ç”¸æ½°
         '''
         project_list = ProjectPage.objects.all()
-        # Ã¿Ò³ÏÔÊ¾ 9 ÆªÎÄÕÂ
+        # å§£å¿›ã€‰é„å‰§ãš 9 ç»¡å›¨æƒç»”ï¿½
         paginator = Paginator(project_list, 9)
-        # »ñÈ¡Ò³Âë
+        # é‘¾å³°å½‡æ¤¤ç”µçˆœ
         page = request.GET.get('page')
-        # ½«µ¼º½¶ÔÏóÏàÓ¦µÄÒ³ÂëÄÚÈİ·µ»Ø¸ø projects
+        # çå——î‡±é‘¸î„î‡®ç’ï¼„æµ‰æ´æ—‚æ®‘æ¤¤ç”µçˆœéå‘­î†æ©æ–¿æ´–ç¼ï¿½ projects
         projects = paginator.get_page(page)
         return render(request, 'project/project_list.html',{'projects':projects})
 
     def show_detail(self,request,id):
         '''
-            ·µ»ØÏêÇéÒ³Ãæ
+            æ©æ–¿æ´–ç’‡ï¸½å„æ¤¤ç”¸æ½°
             Args:
-                self: ÀàÊµÀı¶ÔÏó±¾Éí
-                request: ÏµÍ³ÇëÇóÀà, °üº¬ÓÃ»§±ØÒªµÄĞÅÏ¢
-                id:¶ÔÓ¦ÏîÄ¿id
+                self: ç»«è¯²ç–„æ¸šå¬ªî‡®ç’â„ƒæ¹°éŸ¬ï¿½
+                request: ç»¯è¤ç²ºç’‡é”‹çœ°ç»«ï¿½, é–å‘­æƒˆé¢ã„¦åŸ›è¹‡å‘°î›¦é¨å‹ªä¿Šé­ï¿½
+                id:ç€µç‘°ç°²æ¤¤åœ­æ´°id
             Returns:
-                render: ·µ»ØÏîÄ¿ÏêÇéÒ³Ãæ
+                render: æ©æ–¿æ´–æ¤¤åœ­æ´°ç’‡ï¸½å„æ¤¤ç”¸æ½°
         '''
         project = ProjectPage.objects.get(id = id)
         if (project.publisher == request.user)or(request.user.is_superuser == True):
-            # Èç¹ûÊÇ·¢²¼Õß»òÕß³¬¼¶¹ÜÀíÔ±½øÈë¶ÔÓ¦Ò³Ãæ
+            # æ¿¡å‚›ç‰é„îˆšå½‚ç”¯å†­ï¿½å‘®å¨é‘°å‘°ç§´ç»¾Ñ…î…¸éå——æ†³æ©æ¶˜å†ç€µç‘°ç°²æ¤¤ç”¸æ½°
             return render(request, 'project/project_detail_self.html',{'project':project})
         else:
-            # ½øÈëÆÕÍ¨Ò³Ãæ
-            # ä¯ÀÀÁ¿+1
+            # æ©æ¶˜å†é…î‡€ï¿½æ°¶ã€‰é—ˆï¿½
+            # å¨´å¿šîé–²ï¿½+1
             project.total_views += 1
             project.save(update_fields=['total_views'])
             return render(request, 'project/project_detail_other.html',{'project':project})
 
     def project_create(self,request):
         '''
-            ·µ»Ø·¢²¼ĞÂÏîÄ¿Ò³Ãæ
+            æ©æ–¿æ´–é™æˆç«·é‚ä¼´ã€é©î‡€ã€‰é—ˆï¿½
             Args:
-                self: ÀàÊµÀı¶ÔÏó±¾Éí
-                request: ÏµÍ³ÇëÇóÀà, °üº¬ÓÃ»§±ØÒªµÄĞÅÏ¢
+                self: ç»«è¯²ç–„æ¸šå¬ªî‡®ç’â„ƒæ¹°éŸ¬ï¿½
+                request: ç»¯è¤ç²ºç’‡é”‹çœ°ç»«ï¿½, é–å‘­æƒˆé¢ã„¦åŸ›è¹‡å‘°î›¦é¨å‹ªä¿Šé­ï¿½
             Returns:
-                render: ·µ»Ø·¢²¼ĞÂÏîÄ¿Ò³Ãæ
+                render: æ©æ–¿æ´–é™æˆç«·é‚ä¼´ã€é©î‡€ã€‰é—ˆï¿½
         '''
         if request.user.is_authenticated == False:
-            # Èç¹ûÃ»ÓĞµÇÂ¼
-            messages.success(request, "ÇëµÇÂ¼")
+            # æ¿¡å‚›ç‰å¨Œâ„ƒæ¹é§è¯²ç¶
+            messages.success(request, "ç’‡é£æ«¥è¤°ï¿½")
             return redirect("project:project_list")
         else:
-            # »ñÈ¡µ±Ç°ÓÃ»§µÄÑéÖ¤ĞÅÏ¢
+            # é‘¾å³°å½‡è¤°æ’³å¢ é¢ã„¦åŸ›é¨å‹¯ç™ç’‡ä½·ä¿Šé­ï¿½
             profiles = Profile.objects.all()
             for a in profiles:
                 if a.user == request.user:
                     profile = a
 
-            #ÑéÖ¤ÊÇ·ñÓĞ·¢²¼È¨ÏŞ
+            #æ¥ å²ƒç˜‰é„îˆšæƒéˆå¤Šå½‚ç”¯å†©æ½ˆé—„ï¿½
             if  (request.user.is_superuser == False)and(profile.role == "ST"):
-                # Èç¹û²»ÊÇ³¬¼¶¹ÜÀíÔ±ÇÒÊÇÑ§Éú
-                messages.success(request,"Ã»×Ê¸ñ")
+                # æ¿¡å‚›ç‰æ¶“å¶†æ§¸ç“’å‘¯éª‡ç» ï¼„æ‚Šé›æ¨¹ç¬–é„îˆšî„Ÿé¢ï¿½
+                messages.success(request,"å¨ŒÂ¤ç¥«éï¿½")
                 return redirect("project:project_list")
             else:
                 if request.method == "POST":
-                    # ½«Ìá½»µÄÊı¾İ¸³Öµµ½±íµ¥ÊµÀıÖĞ
+                    # çå—˜å½æµœã‚‡æ®‘éç‰ˆåµç’§å¬ªï¿½ç…åŸŒç›ã„¥å´Ÿç€¹ç‚°ç·¥æ¶“ï¿½
                     project_form = ProjectForm(data=request.POST,files=request.FILES)
-                    # ÅĞ¶ÏÌá½»µÄÊı¾İÊÇ·ñÂú×ãÄ£ĞÍµÄÒªÇó
+                    # é’ã‚†æŸ‡é»æ„ªæ°¦é¨å‹¬æšŸé¹î†½æ§¸éšï¸½å¼§ç“’è™«Äé¨å¬¬æ®‘ç‘•ä½¹çœ°
                     if project_form.is_valid():
-                    # ±£´æÊı¾İ
+                    # æ·‡æ¿†ç“¨éç‰ˆåµ
                         new_project = project_form.save(commit=False)
                         new_project.publisher = request.user
                         project_cd = project_form.cleaned_data
-                        # ±£´æÍ¼Æ¬
+                        # æ·‡æ¿†ç“¨é¥å‰§å¢–
                         if 'avatar' in request.FILES:
                             new_project.avatar = project_cd["avatar"]
 
-                        # ½«ĞÂÎÄÕÂ±£´æµ½Êı¾İ¿âÖĞ
+                        # çå—˜æŸŠé‚å›©ç·æ·‡æ¿†ç“¨é’ç‰ˆæšŸé¹î†¼ç°±æ¶“ï¿½
                         new_project.save()
                         project_form.save_m2m()
                         new_project.workers.add(request.user)
 
                         return redirect("project:project_list")
-                    # Èç¹ûÊı¾İ²»ºÏ·¨£¬·µ»Ø´íÎóĞÅÏ¢
+                    # æ¿¡å‚›ç‰éç‰ˆåµæ¶“å¶…æ‚å¨‰æ›ªç´æ©æ–¿æ´–é–¿æ¬’î‡¤æ·‡â„ƒä¼…
                     else:
-                        return HttpResponse("±íµ¥ÄÚÈİÓĞÎó£¬ÇëÖØĞÂÌîĞ´¡£")
-
+                        return HttpResponse("ç›ã„¥å´Ÿéå‘­î†éˆå¤î‡¤é”›å²ƒî‡¬é–²å¶†æŸŠæ¿‰î‚¢å•“éŠ†ï¿½")
                 else:
                     context = {'project_form': ProjectForm()}
                     return render(request, 'project/project_create.html', context)
 
     def project_delete(self,request,id):
         '''
-            ·µ»ØÏîÄ¿É¾³ıÒ³Ãæ
+            æ©æ–¿æ´–æ¤¤åœ­æ´°é’çŠ»æ«æ¤¤ç”¸æ½°
             Args:
-                self: ÀàÊµÀı¶ÔÏó±¾Éí
-                request: ÏµÍ³ÇëÇóÀà, °üº¬ÓÃ»§±ØÒªµÄĞÅÏ¢
-                id: ¶ÔÓ¦µÄÏîÄ¿id
+                self: ç»«è¯²ç–„æ¸šå¬ªî‡®ç’â„ƒæ¹°éŸ¬ï¿½
+                request: ç»¯è¤ç²ºç’‡é”‹çœ°ç»«ï¿½, é–å‘­æƒˆé¢ã„¦åŸ›è¹‡å‘°î›¦é¨å‹ªä¿Šé­ï¿½
+                id: ç€µç‘°ç°²é¨å‹¯ã€é©ç”¶d
             Returns:
-                render: ·µ»ØÏîÄ¿É¾³ıÒ³Ãæ
+                render: æ©æ–¿æ´–æ¤¤åœ­æ´°é’çŠ»æ«æ¤¤ç”¸æ½°
         '''
         if request.method == 'POST':
             project = ProjectPage.objects.get(id = id)
             project.delete()
             return redirect("project:project_list")
         else:
-            return HttpResponse("½öÔÊĞípostÇëÇó")
+            return HttpResponse("æµ å‘­å‘ç’ç«ostç’‡é”‹çœ°")
 
     def project_update(self,request,id):
         '''
-            ·µ»ØÏîÄ¿¸üĞÂÒ³Ãæ
+            æ©æ–¿æ´–æ¤¤åœ­æ´°é‡å­˜æŸŠæ¤¤ç”¸æ½°
             Args:
-                self: ÀàÊµÀı¶ÔÏó±¾Éí
-                request: ÏµÍ³ÇëÇóÀà, °üº¬ÓÃ»§±ØÒªµÄĞÅÏ¢
-                id: ¶ÔÓ¦µÄÏîÄ¿id
+                self: ç»«è¯²ç–„æ¸šå¬ªî‡®ç’â„ƒæ¹°éŸ¬ï¿½
+                request: ç»¯è¤ç²ºç’‡é”‹çœ°ç»«ï¿½, é–å‘­æƒˆé¢ã„¦åŸ›è¹‡å‘°î›¦é¨å‹ªä¿Šé­ï¿½
+                id: ç€µç‘°ç°²é¨å‹¯ã€é©ç”¶d
             Returns:
-                render: ·µ»ØÏîÄ¿¸üĞÂÒ³Ãæ
+                render: æ©æ–¿æ´–æ¤¤åœ­æ´°é‡å­˜æŸŠæ¤¤ç”¸æ½°
         '''
         project = ProjectPage.objects.get(id=id)
         if request.method == "POST":
-            # ½«Ìá½»µÄÊı¾İ¸³Öµµ½±íµ¥ÊµÀıÖĞ
+            # çå—˜å½æµœã‚‡æ®‘éç‰ˆåµç’§å¬ªï¿½ç…åŸŒç›ã„¥å´Ÿç€¹ç‚°ç·¥æ¶“ï¿½
             project_form = ProjectForm(data=request.POST,files=request.FILES)
-            # ÅĞ¶ÏÌá½»µÄÊı¾İÊÇ·ñÂú×ãÄ£ĞÍµÄÒªÇó
+            # é’ã‚†æŸ‡é»æ„ªæ°¦é¨å‹¬æšŸé¹î†½æ§¸éšï¸½å¼§ç“’è™«Äé¨å¬¬æ®‘ç‘•ä½¹çœ°
             if project_form.is_valid():
-                # ±£´æĞÂĞ´ÈëµÄprojectÊı¾İ²¢±£´æ
+                # æ·‡æ¿†ç“¨é‚æ¿å•“éãƒ§æ®‘projectéç‰ˆåµéªæœµç¹šç€›ï¿½
                 project.title = request.POST['title']
                 project.abstract = request.POST['abstract']
                 project.body = request.POST['body']
                 project.tags.set(request.POST['tags'], clear=True)
                 project_cd = project_form.cleaned_data
-                # workersÌí¼ÓÍ¨¹ıµÄ±¨ÃûÕß,applicantsÉ¾³ıÍ¨¹ıÕß
+                # workerså¨£è¯²å§é–«æ°³ç¹ƒé¨å‹¬å§¤éšå¶ˆï¿½ï¿½,applicantsé’çŠ»æ«é–«æ°³ç¹ƒé‘°ï¿½
                 all_applicants = request.POST['applicants_add']
                 flag = 0
                 for i in range(len(all_applicants)):
@@ -157,7 +186,7 @@ class project_view(View):
                         project.workers.add(add_worker)
                         project.applicants.remove(add_worker)
                         flag = i + 1
-                # applicantsÉ¾³ı²»Í¨¹ıµÄ±¨ÃûÕß
+                # applicantsé’çŠ»æ«æ¶“å¶‰ï¿½æ°³ç¹ƒé¨å‹¬å§¤éšå¶ˆï¿½ï¿½
                 applicants_delete = request.POST['applicants_delete']
                 flag = 0
                 for i in range(len(applicants_delete)):
@@ -167,7 +196,7 @@ class project_view(View):
                         project.applicants.remove(delete_applicant)
                         flag = i + 1
 
-                # workersÉ¾³ıÒªÉ¾³ıµÄ²ÎÓëÕß
+                # workersé’çŠ»æ«ç‘•ä½¸å¹é—„ã‚‡æ®‘é™å‚™ç¬Œé‘°ï¿½
                 workers_delete = request.POST['workers_delete']
                 flag = 0
                 for i in range(len(workers_delete)):
@@ -177,34 +206,34 @@ class project_view(View):
                         project.workers.remove(delete_worker)
                         flag = i + 1
 
-                # Èç¹ûÓĞÍ¼Æ¬ÎÄ¼ş£¬Ìí¼Ó»òÌæ»»Ô­ÎÄ¼ş
+                # æ¿¡å‚›ç‰éˆå¤Šæµ˜é—å›¨æƒæµ è®¹ç´å¨£è¯²å§é´æ ¨æµ›é¹ãˆ å¸«é‚å›¦æ¬¢
                 if 'avatar' in request.FILES:
                     project.avatar = project_cd["avatar"]
                 project.save()
-                # Íê³Éºó·µ»Øµ½ĞŞ¸ÄºóµÄÎÄÕÂÖĞ¡£Ğè´«ÈëÎÄÕÂµÄ id Öµ
+                # ç€¹å±¾åšéšåº¤ç¹‘é¥ç‚²åŸŒæ·‡î†½æ•¼éšåº£æ®‘é‚å›©ç·æ¶“î…œï¿½å‚æ¸¶æµ¼çŠ²å†é‚å›©ç·é¨ï¿½ id éŠï¿½
                 return redirect("project:project_detail", id=id)
-            # Èç¹ûÊı¾İ²»ºÏ·¨£¬·µ»Ø´íÎóĞÅÏ¢
+            # æ¿¡å‚›ç‰éç‰ˆåµæ¶“å¶…æ‚å¨‰æ›ªç´æ©æ–¿æ´–é–¿æ¬’î‡¤æ·‡â„ƒä¼…
             else:
-                return HttpResponse("±íµ¥ÄÚÈİÓĞÎó£¬ÇëÖØĞÂÌîĞ´¡£")
+                return HttpResponse("ç›ã„¥å´Ÿéå‘­î†éˆå¤î‡¤é”›å²ƒî‡¬é–²å¶†æŸŠæ¿‰î‚¢å•“éŠ†ï¿½")
 
-            # Èç¹ûÓÃ»§ GET ÇëÇó»ñÈ¡Êı¾İ
+            # æ¿¡å‚›ç‰é¢ã„¦åŸ› GET ç’‡é”‹çœ°é‘¾å³°å½‡éç‰ˆåµ
         else:
-            # ´´½¨±íµ¥ÀàÊµÀı
+            # é’æ¶˜ç¼“ç›ã„¥å´Ÿç»«è¯²ç–„æ¸šï¿½
             ini = {'body': project.body}
             project_form = ProjectForm(initial = ini)
             context = {'project': project, 'project_form': project_form}
-            # ½«ÏìÓ¦·µ»Øµ½Ä£°åÖĞ
+            # çå——æ·æ´æ—‡ç¹‘é¥ç‚²åŸŒå¦¯â„ƒæ¾˜æ¶“ï¿½
             return render(request, 'project/project_update.html', context)
 
     def project_apply(self,request,id):
         '''
-            µ÷ÓÃURLÖ®ºóÌí¼ÓÉêÇëÕß
+            ç’‹å†ªæ•¤URLæ¶”å¬ªæ‚—å¨£è¯²å§é¢å® î‡¬é‘°ï¿½
             Args:
-                self: ÀàÊµÀı¶ÔÏó±¾Éí
-                request: ÏµÍ³ÇëÇóÀà, °üº¬ÓÃ»§±ØÒªµÄĞÅÏ¢
-                id: ¶ÔÓ¦µÄÏîÄ¿id
+                self: ç»«è¯²ç–„æ¸šå¬ªî‡®ç’â„ƒæ¹°éŸ¬ï¿½
+                request: ç»¯è¤ç²ºç’‡é”‹çœ°ç»«ï¿½, é–å‘­æƒˆé¢ã„¦åŸ›è¹‡å‘°î›¦é¨å‹ªä¿Šé­ï¿½
+                id: ç€µç‘°ç°²é¨å‹¯ã€é©ç”¶d
             Returns:
-                render: ·µ»ØÔ­À´µÄÏîÄ¿ÏêÇéÒ³Ãæ
+                render: æ©æ–¿æ´–é˜ç†¸æ½µé¨å‹¯ã€é©î†¿î‡›é¯å‘´ã€‰é—ˆï¿½
         '''
         project = ProjectPage.objects.get(id=id)
         project.applicants.add(request.user)
