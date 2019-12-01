@@ -133,7 +133,6 @@ class project_view(View):
                     # 如果数据不合法，返回错误信息
                     else:
                         return HttpResponse("表单内容有误，请重新填写。")
-
                 else:
                     context = {'project_form': ProjectForm()}
                     return render(request, 'project/project_create.html', context)
