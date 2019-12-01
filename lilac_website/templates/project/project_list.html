@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+
+<!-- 写入 base.html 中定义的 title -->
+{% block title %}
+    项目列表
+{% endblock title %}
+
+<!-- 写入 base.html 中定义的 content -->
+{% block content %}
+
+<!-- 定义放置文章标题的div容器 -->
+<div class="container">
+    <div class="row mt-2">
+        <!-- 提示信息 -->
+        {% if messages %}
+        <script>
+            {% for msg in messages %}
+                alert('{{ msg.message }}');
+            {% endfor %}
+         </script>
+        {% endif %}
+
+        {% for project in projects %}
+        <!-- 项目内容 -->
+        <div class="col-4 mb-4">
+        <!-- 卡片容器 -->
+            <div class="card h-100">
+                <!-- 标题 -->
+                <h4 class="card-header">{{ project.title }}</h4>
+                <!-- 摘要 -->
+                <div class="card-body">
+                    <p class="card-text">{{ project.abstract|slice:'100' }}...</p>
+                </div>
+                <!-- 注脚 -->
+                <div class="card-footer">
+                    <a href="{% url 'project:project_detail' project.id %}" class="btn btn-primary">阅读本项目</a>
+                </div>
+                <!-- 显示浏览量 -->
+                <span>
+                <small class="col align-self-end" style="color: gray;">
+                    浏览: {{ project.total_views }}
+                </small>
+                </span>
+
+            </div>
+        </div>
+        {% endfor %}
+
+    </div>
+</div>
+<!-- 页码导航 -->
+    <div class="pagination row">
+        <div class="m-auto">
+            <span class="step-links">
+            <!-- 如果不是第一页，则显示上翻按钮 -->
+                {% if projects.has_previous %}
+                <a href="?page=1" class="btn btn-success">
+                    &laquo; 首页
+                </a>
+                <span>...</span>
+                <a href="?page={{ projects.previous_page_number }}"
+                   class="btn btn-secondary"
+                >
+                    {{ projects.previous_page_number }}
+                </a>
+                {% endif %}
+
+                <!-- 当前页面 -->
+                <span class="current btn btn-danger btn-lg">
+                    {{ projects.number }}
+                </span>
+
+                <!-- 如果不是最末页，则显示下翻按钮 -->
+                {% if projects.has_next %}
+                <a href="?page={{ projects.next_page_number }}"
+                   class="btn btn-secondary"
+                >
+                    {{ projects.next_page_number }}
+                </a>
+                <span>...</span>
+                <a href="?page={{ projects.paginator.num_pages }}"
+                   class="btn btn-success"
+                >
+                    末页 &raquo;
+                </a>
+                {% endif %}
+                </span>
+            </div>
+        </div>
+{% endblock content %}
+
+
